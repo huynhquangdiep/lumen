@@ -9,15 +9,25 @@ use Illuminate\Http\Response;
 
 class AuthorController extends Controller {
 
+    public function __construct(Author $author)
+    {
+        $this->author = $author;
+    }
+
     public function showAllAuthors() : JsonResponse 
     {
-        return response()->json(Author::all());
+        return response()->json($this->author->all(), Response::HTTP_OK);
     }
 
     public function showOneAuthor($id) : JsonResponse 
     {
+        $author = $this->author->find($id);
 
-        return response()->json(Author::find($id));
+        if (empty($author)) {
+            return response()->json(Response::HTTP_NOT_FOUND);
+        }
+
+        return response()->json($author, Response::HTTP_OK);
     }
 
     public function create(Request $request) : JsonResponse 
@@ -28,7 +38,7 @@ class AuthorController extends Controller {
             'location' => 'required|alpha'
         ]);
 
-        $author = Author::create($request->all());
+        $author = $this->author->create($request->all());
 
         return response()->json($author, Response::HTTP_CREATED);
     }
@@ -40,7 +50,12 @@ class AuthorController extends Controller {
             'location' => 'alpha'
         ]);
 
-        $author = Author::findOrFail($id);
+        $author = $this->author->find($id);
+
+        if (empty($author)) {
+            return response()->json(Response::HTTP_NOT_FOUND);
+        }
+
         $author->update($request->all());
 
         return response()->json($author, Response::HTTP_OK);
@@ -48,8 +63,12 @@ class AuthorController extends Controller {
 
     public function delete($id) {
 
-        Author::findOrFail($id)->delete();
+        $author = $this->author->find($id);
 
-        return response('Deleted Successfully', Response::HTTP_OK);
+        if (empty($author)) {
+            return response()->json(Response::HTTP_NOT_FOUND);
+        }
+
+        return response($author->delete(), Response::HTTP_OK);
     }
 }

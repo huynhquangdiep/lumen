@@ -11,30 +11,25 @@ use Illuminate\Http\Response;
 
 class Auth0Middleware {
 
-    public function handle(
-        Request $request,
-        Closure $next,
-        ?string $requiredScope = null
-    ) {
-
+    public function handle(Request $request, Closure $next, ?string $requiredScope = null) 
+    {
         $token = $request->bearerToken();
+
         if (!$token) {
-            return response()
-                ->json('No token provided', Response::HTTP_UNAUTHORIZED);
+            return response()->json('No token provided', Response::HTTP_UNAUTHORIZED);
         }
 
         try {
             $this->validateToken($token, $requiredScope);
         } catch (InsufficientScopeException | InvalidTokenException $exception) {
-            return response()
-                ->json($exception->getMessage(), $exception->getCode());
+            return response()->json($exception->getMessage(), $exception->getCode());
         }
 
         return $next($request);
     }
 
-    public function validateToken($token, ?string $requiredScope) {
-
+    public function validateToken($token, ?string $requiredScope) 
+    {
         $auth0 = new Auth0(
             [
                 'domain' => env('AUTH0_DOMAIN'),
@@ -44,13 +39,15 @@ class Auth0Middleware {
                 ],
             ]
         );
+
         $decodedToken = $auth0->decode($token);
         if (!empty($requiredScope)) {
             $this->ensureTokenHasScope($decodedToken->toArray(), $requiredScope);
         }
     }
 
-    private function ensureTokenHasScope(array $decodedToken, string $requiredScope) {
+    private function ensureTokenHasScope(array $decodedToken, string $requiredScope) 
+    {
 
         $tokenScope = $decodedToken['scope'] ?? '';
         if (empty($tokenScope) || !$this->tokenHasScope($tokenScope, $requiredScope)) {
@@ -59,8 +56,8 @@ class Auth0Middleware {
         }
     }
 
-    private function tokenHasScope(string $scopeString, string $requiredScope)
-    : bool {
+    private function tokenHasScope(string $scopeString, string $requiredScope): bool 
+    {
 
         $tokenScopes = explode(' ', $scopeString);
 
